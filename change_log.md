@@ -3,6 +3,17 @@
 機能追加・改修の履歴を残す。
 各versionのソースコードは、Tagsから'vx.x'を選択することで閲覧可能。
 
+## v1.3
+
+### Summary
+
+- 攻撃力タイプを物理攻撃力（ATK）と魔法攻撃力（MAT）の2種類とする
+- 一定確率（確率は固定値）で魔法攻撃をする
+
+### Output_sample
+
+- `output/output_v1.3.txt`
+
 ## v1.2
 
 ### Summary
@@ -12,7 +23,7 @@
 
 ### Output_sample
 
-- 乱数が使われるので同じ初期ステータス（HP,攻撃力）でも勝敗が変化する
+乱数が使われるので同じ初期ステータス（HP,攻撃力）でも勝敗が変化する
 
 - `output/output_v1.2_1.txt`
 - `output/output_v1.2_1.txt`
