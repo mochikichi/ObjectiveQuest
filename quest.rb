@@ -3,7 +3,7 @@ CRITICAL_PROBABILITY = 5
 MISS_PROBABILITY = 10
 MAGIC_ATTACK_PROBABILITY = 3
 
-class Mob
+class Unit
   attr_reader :name, :atk, :mat
   attr_accessor :hp
   def initialize(name:, max_hp:, atk:, mat:)
@@ -55,27 +55,70 @@ class Mob
   end
 end
 
-hero = Mob.new(name: '勇者', max_hp: 350, atk: 70, mat: 40)
-satan = Mob.new(name: '魔王', max_hp: 400, atk: 60, mat: 70)
-
-puts 'バトル開始！'
-puts hero.show_status
-puts satan.show_status
-puts '================='
-
-until (satan.hp <= 0 || hero.hp <= 0)
-  hero.attack(satan)
-  if satan.hp <= 0
-    break puts "#{satan.name}を倒した！世界に平和が訪れた。"
-  else
-    puts satan.show_status
+class Facilitator
+  attr_reader :units
+  def initialize(units_infos)
+    @units = set_units(units_infos)
   end
 
-  satan.attack(hero)
-  if hero.hp <= 0
-    break puts '勇者は倒れた・・・・・。'
-  else
-    puts hero.show_status
+  def start
+    opening_message
+    offense, defense = units
+    battle(offense, defense)
   end
-  puts '================='
+
+  private
+
+  def set_units(units_infos)
+    units = []
+    units_infos.each do |info|
+      units << Unit.new(name: info[:name], max_hp: info[:max_hp], atk: info[:atk], mat: info[:mat])
+    end
+    units
+  end
+
+  def opening_message
+    puts 'バトル開始！'
+    puts units.map(&:show_status)
+    puts '================='
+  end
+
+  def battle(offense, defense)
+    while alive_anyone?
+      offense.attack(defense)
+      if defense.hp <= 0
+        ending_message = (offense.name == '勇者') ? happy_end(offense, defense) : bad_end(offense, defense)
+        break puts ending_message
+      else
+        puts defense.show_status
+      end
+      puts '================='
+      offense, defense = change_turn(offense, defense)
+    end
+  end
+
+  def alive_anyone?
+    flg = false
+    units.each {|unit| break flg = true if unit.hp > 0 }
+    flg
+  end
+
+  def change_turn(offense, defense)
+    [defense, offense]
+  end
+
+  def happy_end(offense, defense)
+    "#{offense.name}は#{defense.name}を倒した！。世界に平和が訪れた。"
+  end
+
+  def bad_end(offense, defense)
+    "#{defense.name}は倒れた・・・。世界が闇に包まれた。"
+  end
 end
+
+HERO = { name: '勇者', max_hp: 350, atk: 70, mat: 40 }
+SATAN = { name: '魔王', max_hp: 400, atk: 60, mat: 70 }
+units_infos = [HERO, SATAN]
+
+facilitator = Facilitator.new(units_infos)
+facilitator.start
