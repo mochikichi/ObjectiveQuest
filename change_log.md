@@ -3,6 +3,17 @@
 機能追加・改修の履歴を残す。
 各versionのソースコードは、Tagsから'vx.x'を選択することで閲覧可能。
 
+## v1.4
+
+### Summary
+
+- 複数人パーティーに対応
+- 行動順は固定
+
+### Output_sample
+
+- `output/output_v1.4.txt`
+
 ## v1.3
 
 ### Summary

@@ -56,15 +56,15 @@ class Unit
 end
 
 class Facilitator
-  attr_reader :units
-  def initialize(units_infos)
-    @units = set_units(units_infos)
+  attr_reader :heros, :enemies
+  def initialize(heros, enemies)
+    @heros = set_units(heros)
+    @enemies = set_units(enemies)
   end
 
   def start
     opening_message
-    offense, defense = units
-    battle(offense, defense)
+    battle(heros, enemies)
   end
 
   private
@@ -79,46 +79,77 @@ class Facilitator
 
   def opening_message
     puts 'バトル開始！'
-    puts units.map(&:show_status)
+    puts all_units.map(&:show_status)
     puts '================='
   end
 
-  def battle(offense, defense)
+  def all_units
+    heros + enemies
+  end
+
+  def battle(offenses, defenses)
     while alive_anyone?
-      offense.attack(defense)
-      if defense.hp <= 0
-        ending_message = (offense.name == '勇者') ? happy_end(offense, defense) : bad_end(offense, defense)
-        break puts ending_message
-      else
-        puts defense.show_status
+      offenses.each do |offense|
+        defense = select_target(defenses)
+        offense.attack(defense)
+        if defense.hp <= 0
+          defenses.delete(defense)
+          puts "#{offense.name}は#{defense.name}をやっつけた！"
+        end
+        if wipe?(defenses)
+          ending_message = heros?(offense) ? happy_end(offense, defense) : bad_end(offense, defense)
+          return puts ending_message
+        end
+        puts all_units.map(&:show_status)
+        puts '================='
       end
-      puts '================='
-      offense, defense = change_turn(offense, defense)
+      offenses, defenses = change_turn(offenses, defenses)
     end
   end
 
   def alive_anyone?
     flg = false
-    units.each {|unit| break flg = true if unit.hp > 0 }
+    all_units.each {|unit| break flg = true if unit.hp > 0 }
     flg
   end
 
-  def change_turn(offense, defense)
-    [defense, offense]
+  def select_target(targets)
+    target = targets.first
+    if target.hp <= 0
+      targets.delete(target)
+      select_target(targets)
+    end
+    target
+  end
+
+  def heros?(unit)
+    heros.include?(unit)
+  end
+
+  def wipe?(defenses)
+    defenses.empty?
   end
 
   def happy_end(offense, defense)
-    "#{offense.name}は#{defense.name}を倒した！。世界に平和が訪れた。"
+    "#{offense.name}たちは#{defense.name}たちを倒した！。世界に平和が訪れた。"
   end
 
   def bad_end(offense, defense)
-    "#{defense.name}は倒れた・・・。世界が闇に包まれた。"
+    "#{defense.name}たちは倒れた・・・。世界が闇に包まれた。"
+  end
+
+  def change_turn(offenses, defenses)
+    [defenses, offenses]
   end
 end
 
-HERO = { name: '勇者', max_hp: 350, atk: 70, mat: 40 }
-SATAN = { name: '魔王', max_hp: 400, atk: 60, mat: 70 }
-units_infos = [HERO, SATAN]
+HERO1 = { name: 'ゆうしゃ', max_hp: 200, atk: 50, mat: 10 }
+HERO2 = { name: '魔法使い', max_hp: 100, atk: 20, mat: 50 }
+ENEMY1 = { name: 'スライム', max_hp: 10, atk: 10, mat: 0 }
+ENEMY2 = { name: 'ドラゴン', max_hp: 300, atk: 50, mat: 90 }
+# SATAN = { name: '魔王', max_hp: 400, atk: 60, mat: 70 }
+heros = [HERO1, HERO2]
+enemies = [ENEMY1, ENEMY2]
 
-facilitator = Facilitator.new(units_infos)
+facilitator = Facilitator.new(heros, enemies)
 facilitator.start
