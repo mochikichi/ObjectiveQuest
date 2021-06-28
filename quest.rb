@@ -6,14 +6,15 @@ MISS_PROBABILITY = 10
 MAGIC_ATTACK_PROBABILITY = 3
 
 class Unit
-  attr_reader :name, :atk, :mat
+  attr_reader :name, :atk, :mat, :agi
   attr_accessor :hp
-  def initialize(name:, max_hp:, atk:, mat:)
+  def initialize(name:, max_hp:, atk:, mat:, agi:)
     @name = name
     @max_hp = max_hp
     @hp = @max_hp
     @atk = atk
     @mat = mat
+    @agi = agi
   end
 
   def attack(target)
@@ -35,7 +36,7 @@ class Unit
   end
 
   def show_status
-    "#{name} HP:#{hp}, 攻撃力:#{atk}, 魔法攻撃力:#{mat}"
+    "#{name} HP:#{hp}, 攻撃力:#{atk}, 魔法攻撃力:#{mat}, 素早さ:#{agi}"
   end
 
   private
@@ -66,7 +67,7 @@ class Facilitator
 
   def start
     opening_message
-    battle(heros, enemies)
+    battle
   end
 
   private
@@ -74,14 +75,14 @@ class Facilitator
   def set_units(units_infos)
     units = []
     units_infos.each do |info|
-      units << Unit.new(name: info[:name], max_hp: info[:max_hp], atk: info[:atk], mat: info[:mat])
+      units << Unit.new(name: info[:name], max_hp: info[:max_hp], atk: info[:atk], mat: info[:mat], agi: info[:agi])
     end
     units
   end
 
   def opening_message
     puts 'バトル開始！'
-    puts all_units.map(&:show_status)
+    puts sorted_units.map(&:show_status)
     puts '================='
   end
 
@@ -89,23 +90,25 @@ class Facilitator
     heros + enemies
   end
 
-  def battle(offenses, defenses)
+  def battle
     while alive_anyone?
-      offenses.each do |offense|
-        defense = select_target(defenses)
-        offense.attack(defense)
-        if defense.hp <= 0
-          defenses.delete(defense)
-          puts "#{offense.name}は#{defense.name}をやっつけた！"
+      units = sorted_units
+      units.each do |unit|
+        targets = heros?(unit) ? enemies : heros
+        target = select_target(targets)
+        unit.attack(target)
+        if target.hp <= 0
+          units.delete(target)
+          targets.delete(target)
+          puts "#{unit.name}は#{target.name}をやっつけた！"
         end
-        if wipe?(defenses)
-          ending_message = heros?(offense) ? happy_end(offense, defense) : bad_end(offense, defense)
+        if wipe?(targets)
+          ending_message = heros?(unit) ? happy_end(unit, target) : bad_end(unit, target)
           return puts ending_message
         end
-        puts all_units.map(&:show_status)
+        puts units.map(&:show_status)
         puts '================='
       end
-      offenses, defenses = change_turn(offenses, defenses)
     end
   end
 
@@ -115,8 +118,12 @@ class Facilitator
     flg
   end
 
+  def sorted_units
+    all_units.sort_by { |unit| unit.agi }.reverse
+  end
+
   def select_target(targets)
-    target = targets.first
+    target = targets.shuffle.first
     if target.hp <= 0
       targets.delete(target)
       select_target(targets)
@@ -145,13 +152,16 @@ class Facilitator
   end
 end
 
-HERO1 = { name: 'ゆうしゃ', max_hp: 200, atk: 50, mat: 10 }
-HERO2 = { name: '魔法使い', max_hp: 100, atk: 20, mat: 50 }
-ENEMY1 = { name: 'スライム', max_hp: 10, atk: 10, mat: 0 }
-ENEMY2 = { name: 'ドラゴン', max_hp: 300, atk: 50, mat: 90 }
-# SATAN = { name: '魔王', max_hp: 400, atk: 60, mat: 70 }
-heros = [HERO1, HERO2]
-enemies = [ENEMY1, ENEMY2]
+HERO1 = { name: 'ゆうしゃ', max_hp: 200, atk: 50, mat: 10, agi: 50 }
+HERO2 = { name: '魔法使い', max_hp: 100, atk: 20, mat: 50, agi: 40 }
+HERO3 = { name: 'せんし', max_hp: 400, atk: 40, mat: 0, agi: 30 }
+
+ENEMY1 = { name: 'スライム', max_hp: 10, atk: 10, mat: 0, agi: 10 }
+ENEMY2 = { name: 'ドラゴン', max_hp: 250, atk: 30, mat: 90, agi: 60 }
+ENEMY3 = { name: 'ゴーレム', max_hp: 400, atk: 70, mat: 0, agi: 20 }
+
+heros = [HERO1, HERO2, HERO3]
+enemies = [ENEMY1, ENEMY2, ENEMY3]
 
 facilitator = Facilitator.new(heros, enemies)
 facilitator.start
