@@ -1,62 +1,4 @@
-require 'pry'
-
-CRITICAL_COEFFICIENT = 1.5
-CRITICAL_PROBABILITY = 5
-MISS_PROBABILITY = 10
-MAGIC_ATTACK_PROBABILITY = 3
-
-class Unit
-  attr_reader :name, :atk, :mat, :agi
-  attr_accessor :hp
-  def initialize(name:, max_hp:, atk:, mat:, agi:)
-    @name = name
-    @max_hp = max_hp
-    @hp = @max_hp
-    @atk = atk
-    @mat = mat
-    @agi = agi
-  end
-
-  def attack(target)
-    puts "#{name}の攻撃！"
-    return puts 'ミス！！！' if miss?
-    if magic_attack?
-      puts '★魔法攻撃！'
-      target.hp -= mat
-      damage = mat
-    elsif critical?
-      puts 'クリティカルーーー！！！'
-      critical_attack(target)
-      damage = (atk * CRITICAL_COEFFICIENT).round
-    else
-      target.hp -= atk
-      damage = atk
-    end
-    puts "#{target.name}に#{damage}のダメージ！"
-  end
-
-  def show_status
-    "#{name} HP:#{hp}, 攻撃力:#{atk}, 魔法攻撃力:#{mat}, 素早さ:#{agi}"
-  end
-
-  private
-
-  def critical?
-    rand(CRITICAL_PROBABILITY) == 1
-  end
-
-  def miss?
-    rand(MISS_PROBABILITY) == 1
-  end
-
-  def magic_attack?
-    rand(MAGIC_ATTACK_PROBABILITY) == 1
-  end
-
-  def critical_attack(target)
-    target.hp -= (atk * CRITICAL_COEFFICIENT).round
-  end
-end
+require './unit'
 
 class Facilitator
   attr_reader :heros, :enemies
@@ -151,17 +93,3 @@ class Facilitator
     [defenses, offenses]
   end
 end
-
-HERO1 = { name: 'ゆうしゃ', max_hp: 200, atk: 50, mat: 10, agi: 50 }
-HERO2 = { name: '魔法使い', max_hp: 100, atk: 20, mat: 50, agi: 40 }
-HERO3 = { name: 'せんし', max_hp: 400, atk: 40, mat: 0, agi: 30 }
-
-ENEMY1 = { name: 'スライム', max_hp: 10, atk: 10, mat: 0, agi: 10 }
-ENEMY2 = { name: 'ドラゴン', max_hp: 250, atk: 30, mat: 90, agi: 60 }
-ENEMY3 = { name: 'ゴーレム', max_hp: 400, atk: 70, mat: 0, agi: 20 }
-
-heros = [HERO1, HERO2, HERO3]
-enemies = [ENEMY1, ENEMY2, ENEMY3]
-
-facilitator = Facilitator.new(heros, enemies)
-facilitator.start
