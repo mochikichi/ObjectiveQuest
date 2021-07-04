@@ -19,6 +19,10 @@ class Unit
     @abilities = []
   end
 
+  def alive?
+    hp > 0
+  end
+
   def attack(target)
     puts "#{name}の攻撃！"
     return puts 'ミス！！！' if miss?
@@ -61,10 +65,6 @@ class Unit
   end
 
   private
-
-  def alive?
-    hp > 0
-  end
 
   def dead?
     !alive?

@@ -60,9 +60,7 @@ class Facilitator
     end
 
     def alive_anyone?
-      flg = false
-      all_units.each {|unit| break flg = true if unit.hp > 0 }
-      flg
+      !all_units.select { |unit| unit.alive? }.empty?
     end
 
     def sorted_units
@@ -70,12 +68,7 @@ class Facilitator
     end
 
     def select_target(targets)
-      target = targets.shuffle.first
-      if target.hp <= 0
-        targets.delete(target)
-        select_target(targets)
-      end
-      target
+      targets.select { |target| target.alive? }.shuffle.first
     end
 
     def heal_action?(unit)
@@ -95,8 +88,8 @@ class Facilitator
       heros.include?(unit)
     end
 
-    def wipe?(defenses)
-      defenses.empty?
+    def wipe?(targets)
+      targets.empty?
     end
 
     def happy_end(offense, defense)
@@ -105,10 +98,6 @@ class Facilitator
 
     def bad_end(offense, defense)
       "#{defense.name}たちは倒れた・・・。世界が闇に包まれた。"
-    end
-
-    def change_turn(offenses, defenses)
-      [defenses, offenses]
     end
   end
 end
