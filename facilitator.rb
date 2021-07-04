@@ -36,17 +36,22 @@ class Facilitator
       while alive_anyone?
         units = sorted_units
         units.each do |unit|
-          targets = heros?(unit) ? enemies : heros
-          target = select_target(targets)
-          unit.attack(target)
-          if target.hp <= 0
-            units.delete(target)
-            targets.delete(target)
-            puts "#{unit.name}は#{target.name}をやっつけた！"
-          end
-          if wipe?(targets)
-            ending_message = heros?(unit) ? happy_end(unit, target) : bad_end(unit, target)
-            return puts ending_message
+          if heal_action?(unit)
+            healing_target = select_healing_target(healing_targets(unit))
+            unit.heal(healing_target)
+          else
+            targets = heros?(unit) ? enemies : heros
+            target = select_target(targets)
+            unit.attack(target)
+            if target.hp <= 0
+              units.delete(target)
+              targets.delete(target)
+              puts "#{unit.name}は#{target.name}をやっつけた！"
+            end
+            if wipe?(targets)
+              ending_message = heros?(unit) ? happy_end(unit, target) : bad_end(unit, target)
+              return puts ending_message
+            end
           end
           puts units.map(&:show_status)
           puts '================='
@@ -71,6 +76,19 @@ class Facilitator
         select_target(targets)
       end
       target
+    end
+
+    def heal_action?(unit)
+      !unit.heal_abilities.empty? && !healing_targets(unit).empty?
+    end
+
+    def healing_targets(unit)
+      targets = heros?(unit) ? heros : enemies
+      targets.select { |target| target.need_heal? == true }
+    end
+
+    def select_healing_target(targets)
+      targets.sort_by { |target| target.damaged_amount }.reverse.first
     end
 
     def heros?(unit)

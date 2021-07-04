@@ -2,10 +2,10 @@ require 'pry'
 CRITICAL_COEFFICIENT = 1.5
 CRITICAL_PROBABILITY = 5
 MISS_PROBABILITY = 10
-MAGIC_ATTACK_PROBABILITY = 3
+HEALING_PERCENTAGE = 0.5
 
 class Unit
-  attr_reader :name, :atk, :mat, :agi, :abilities
+  attr_reader :name, :max_hp, :atk, :mat, :agi, :abilities
   attr_accessor :hp, :mp
   def initialize(name:, max_hp:, max_mp:, atk:, mat:, agi:)
     @name = name
@@ -22,8 +22,8 @@ class Unit
   def attack(target)
     puts "#{name}の攻撃！"
     return puts 'ミス！！！' if miss?
-    if mp > 0 && ability = selected_ability(sorted_abilities(abilities))
-      magic_attack(target, ability)
+    if magic_attack?
+      magic_attack(target)
     elsif critical?
       critical_attack(target)
     else
@@ -39,25 +39,63 @@ class Unit
     @abilities = abilities | ability_list
   end
 
+  def heal_abilities
+    abilities.select { |ability| ability.heal? && ability.mp_cost <= mp }
+  end
+
+  def damaged_amount
+    max_hp - hp
+  end
+
+  def need_heal?
+    alive? && hp <= max_hp * HEALING_PERCENTAGE
+  end
+
+  def heal(target)
+    ability = select_healing_ability
+    puts "♡回復♡#{name}は#{ability.name}を唱えた"
+    heal_amount = ((target.hp + ability.effect_amount) > target.max_hp)? target.max_hp - target.hp : ability.effect_amount
+    target.hp += heal_amount
+    reduce_mp(ability)
+    heal_message(target, heal_amount)
+  end
+
   private
+
+  def alive?
+    hp > 0
+  end
+
+  def dead?
+    !alive?
+  end
 
   def miss?
     rand(MISS_PROBABILITY) == 1
   end
 
-  def sorted_abilities(abilities)
-    abilities.sort_by { |ability| ability.effect_amount }.reverse
+  def magic_attack?
+    !magic_attack_abilities.empty? && mp > 0
   end
 
-  def selected_ability(abilities)
-    abilities.select { |ability| ability.mp_cost <= mp }.first
+  def magic_attack_abilities
+    abilities.select { |ability| ability.magic_attack? && ability.mp_cost <= mp }
   end
 
-  def magic_attack(target, ability)
-    puts "★#{ability.name}を唱えた"
+  def magic_attack(target)
+    ability = select_magic_attack_ability
+    puts "★魔法攻撃★#{name}は#{ability.name}を唱えた"
     damage_amount = ability.effect_amount
-    self.mp -= ability.mp_cost
+    reduce_mp(ability)
     damege(target, damage_amount)
+  end
+
+  def select_magic_attack_ability
+    magic_attack_abilities.sort_by { |ability| ability.effect_amount }.reverse.first
+  end
+
+  def reduce_mp(ability)
+    self.mp = ((mp - ability.mp_cost) < 0)? 0 : mp - ability.mp_cost
   end
 
   def damege(target, damage_amount)
@@ -67,6 +105,14 @@ class Unit
 
   def dameg_message(target, damage_amount)
     puts "#{target.name}に#{damage_amount}のダメージ！"
+  end
+
+  def select_healing_ability
+    heal_abilities.sort_by { |ability| ability.effect_amount }.reverse.first
+  end
+
+  def heal_message(target, heal_amount)
+    puts "#{target.name}のHPを#{heal_amount}回復！"
   end
 
   def critical?
